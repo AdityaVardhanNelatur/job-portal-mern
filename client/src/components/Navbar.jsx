@@ -48,7 +48,7 @@ const Navbar = () => {
           className="flex items-center gap-2 text-blue-600 font-bold text-xl cursor-pointer"
         >
           <Briefcase size={22} />
-          JobPortal
+          JobSphere
         </div>
 
         {/* NAV ITEMS */}
