@@ -12,33 +12,70 @@ const JobApplications = () => {
   }, []);
 
   const fetchApplications = async () => {
-    const res = await API.get(`/applications/job/${jobId}`);
-    setApplications(res.data);
-    setLoading(false);
+    try {
+      const res = await API.get(`/applications/job/${jobId}`);
+      setApplications(res.data);
+    } catch (error) {
+      console.error("Failed to fetch applications", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateStatus = async (id, status) => {
-    await API.put(`/applications/${id}/status`, { status });
-    setApplications(prev =>
-      prev.map(app =>
-        app._id === id ? { ...app, status } : app
-      )
-    );
+  const updateStatus = async (id, status, name) => {
+    const confirmMessage =
+      status === "shortlisted"
+        ? `Are you sure you want to SHORTLIST ${name}?`
+        : `Are you sure you want to REJECT ${name}?`;
+
+    // ✅ Confirmation popup
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      await API.put(`/applications/${id}/status`, { status });
+
+      setApplications(prev =>
+        prev.map(app =>
+          app._id === id ? { ...app, status } : app
+        )
+      );
+
+      // ✅ Success popup
+      alert(
+        status === "shortlisted"
+          ? `✅ ${name} has been shortlisted`
+          : `❌ ${name} has been rejected`
+      );
+    } catch (error) {
+      alert("❌ Failed to update application status");
+    }
   };
 
   if (loading) return <p className="p-6">Loading...</p>;
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Job Applications</h1>
 
+      {applications.length === 0 && (
+        <p>No applications for this job.</p>
+      )}
+
       {applications.map(app => (
-        <div key={app._id} className="border p-4 mb-4 rounded bg-white shadow">
+        <div
+          key={app._id}
+          className="border p-4 mb-4 rounded bg-white shadow"
+        >
           <p className="font-semibold">
             {app.applicant.name} ({app.applicant.email})
           </p>
 
-          <p>Status: <b>{app.status}</b></p>
+          <p className="mt-1">
+            Status:{" "}
+            <span className="font-bold uppercase">
+              {app.status}
+            </span>
+          </p>
 
           {/* ✅ VIEW RESUME */}
           <a
@@ -50,17 +87,24 @@ const JobApplications = () => {
             View Resume (PDF)
           </a>
 
+          {/* ACTION BUTTONS */}
           <div className="mt-3 space-x-2">
             <button
-              onClick={() => updateStatus(app._id, "shortlisted")}
-              className="bg-green-600 text-white px-3 py-1 rounded"
+              onClick={() =>
+                updateStatus(app._id, "shortlisted", app.applicant.name)
+              }
+              disabled={app.status !== "pending"}
+              className="bg-green-600 text-white px-3 py-1 rounded disabled:opacity-50"
             >
               Shortlist
             </button>
 
             <button
-              onClick={() => updateStatus(app._id, "rejected")}
-              className="bg-red-600 text-white px-3 py-1 rounded"
+              onClick={() =>
+                updateStatus(app._id, "rejected", app.applicant.name)
+              }
+              disabled={app.status !== "pending"}
+              className="bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
             >
               Reject
             </button>

@@ -1,135 +1,80 @@
 import Application from "../models/Application.js";
 import Job from "../models/Job.js";
-import User from "../models/User.js";
-import sendEmail from "../utils/sendEmail.js";
 
-/* =========================
- APPLY FOR JOB (USER)
-========================= */
+/**
+ * APPLY FOR JOB
+ */
 export const applyForJob = async (req, res) => {
-  try {
-    const { jobId } = req.params;
-    const userId = req.user.id;
+  const { jobId } = req.params;
+  const userId = req.user.id;
 
-    const job = await Job.findById(jobId);
-    if (!job) return res.status(404).json({ message: "Job not found" });
+  const job = await Job.findById(jobId);
+  if (!job) return res.status(404).json({ message: "Job not found" });
+  if (job.status === "closed")
+    return res.status(400).json({ message: "Job closed" });
 
-    if (job.status === "closed") {
-      return res.status(400).json({ message: "Job applications are closed" });
-    }
+  const exists = await Application.findOne({ job: jobId, applicant: userId });
+  if (exists)
+    return res.status(400).json({ message: "Already applied" });
 
-    const alreadyApplied = await Application.findOne({
-      job: jobId,
-      applicant: userId
-    });
+  if (!req.file)
+    return res.status(400).json({ message: "Resume required" });
 
-    if (alreadyApplied) {
-      return res.status(400).json({ message: "You have already applied" });
-    }
+  const application = await Application.create({
+    job: jobId,
+    applicant: userId,
+    resume: req.file.path
+  });
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Resume (PDF) is required" });
-    }
-
-    const application = await Application.create({
-      job: jobId,
-      applicant: userId,
-      resume: req.file.path
-    });
-
-    const user = await User.findById(userId);
-    if (user?.email) {
-      await sendEmail({
-        to: user.email,
-        subject: "Job Application Submitted",
-        html: `<p>You applied for <b>${job.title}</b> at <b>${job.company}</b></p>`
-      });
-    }
-
-    res.status(201).json({ message: "Applied successfully", application });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(201).json({ message: "Applied successfully", application });
 };
 
-/* =========================
- UPDATE STATUS (ADMIN)
-========================= */
+/**
+ * UPDATE APPLICATION STATUS
+ */
 export const updateApplicationStatus = async (req, res) => {
-  try {
-    const { applicationId } = req.params;
-    const { status } = req.body;
+  const { status } = req.body;
 
-    if (!["shortlisted", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-
-    const application = await Application.findById(applicationId)
-      .populate("applicant", "name email")
-      .populate("job", "title company");
-
-    if (!application) {
-      return res.status(404).json({ message: "Application not found" });
-    }
-
-    application.status = status;
-    await application.save();
-
-    if (application.applicant?.email) {
-      await sendEmail({
-        to: application.applicant.email,
-        subject: `Application ${status.toUpperCase()}`,
-        html: `<p>Your application for <b>${application.job.title}</b> was ${status}</p>`
-      });
-    }
-
-    res.json({ message: "Status updated", application });
-
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
+  if (!["shortlisted", "rejected"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
   }
+
+  const application = await Application.findById(req.params.applicationId);
+  if (!application)
+    return res.status(404).json({ message: "Application not found" });
+
+  application.status = status;
+  await application.save();
+
+  res.json({ message: "Status updated", application });
 };
 
-/* =========================
- GET APPLICATIONS BY JOB (ADMIN)
-========================= */
+/**
+ * GET APPLICATIONS BY JOB (ADMIN)
+ */
 export const getApplicationsByJob = async (req, res) => {
-  try {
-    const applications = await Application.find({ job: req.params.jobId })
-      .populate("applicant", "name email")
-      .populate("job", "title company");
+  const applications = await Application.find({ job: req.params.jobId })
+    .populate("applicant", "name email")
+    .populate("job", "title company");
 
-    const result = applications.map(app => ({
-      ...app._doc,
-      resumeUrl: `${req.protocol}://${req.get("host")}/${app.resume}`
-    }));
+  const result = applications.map(app => ({
+    ...app._doc,
+    resumeUrl: `${req.protocol}://${req.get("host")}/${app.resume}`
+  }));
 
-    res.json(result);
-
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch applications" });
-  }
+  res.json(result);
 };
 
-/* =========================
- GET MY APPLICATIONS (USER)
-========================= */
+/**
+ * ✅ GET MY APPLICATIONS (FILTER DELETED JOBS)
+ */
 export const getMyApplications = async (req, res) => {
-  try {
-    const applications = await Application.find({
-      applicant: req.user.id
-    }).populate("job", "title company");
+  const applications = await Application.find({
+    applicant: req.user.id
+  }).populate("job", "title company");
 
-    const result = applications.map(app => ({
-      ...app._doc,
-      resumeUrl: `${req.protocol}://${req.get("host")}/${app.resume}`
-    }));
+  // 🔥 REMOVE APPLICATIONS WHERE JOB IS DELETED
+  const filtered = applications.filter(app => app.job !== null);
 
-    res.json(result);
-
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch applications" });
-  }
+  res.json(filtered);
 };

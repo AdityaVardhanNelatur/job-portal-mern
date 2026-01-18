@@ -1,11 +1,9 @@
 import Job from "../models/Job.js";
 import Application from "../models/Application.js";
 
-/**
- * @desc   Create a new job (Admin only)
- * @route  POST /api/jobs/create
- * @access Private (Admin)
- */
+/* =========================
+   CREATE JOB (ADMIN)
+========================= */
 export const createJob = async (req, res) => {
   try {
     const job = await Job.create({
@@ -15,175 +13,125 @@ export const createJob = async (req, res) => {
       location: req.body.location,
       salary: req.body.salary,
       jobType: req.body.jobType,
+      status: "open",
       createdBy: req.user.id
     });
 
-    res.status(201).json({
-      message: "Job created",
-      job
-    });
+    res.status(201).json({ message: "Job created", job });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to create job",
-      error: error.message
-    });
+    res.status(500).json({ message: "Failed to create job" });
   }
 };
 
-/**
- * @desc   Get all OPEN jobs (public)
- * @route  GET /api/jobs
- */
+/* =========================
+   GET ALL OPEN JOBS (PUBLIC)
+========================= */
 export const getAllJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({ status: "open" })
-      .sort({ createdAt: -1 });
-
-    res.status(200).json(jobs);
-  } catch (error) {
+    const jobs = await Job.find({ status: "open" }).sort({ createdAt: -1 });
+    res.json(jobs);
+  } catch {
     res.status(500).json({ message: "Failed to fetch jobs" });
   }
 };
 
-/**
- * @desc   Get single job by ID
- * @route  GET /api/jobs/:id
- */
+/* =========================
+   GET JOB BY ID
+========================= */
 export const getJobById = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
-
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
-    }
-
-    res.status(200).json(job);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching job" });
+    if (!job) return res.status(404).json({ message: "Job not found" });
+    res.json(job);
+  } catch {
+    res.status(500).json({ message: "Failed to fetch job" });
   }
 };
 
-/**
- * @desc   Get jobs created by logged-in admin
- * @route  GET /api/jobs/my
- */
+/* =========================
+   GET ADMIN JOBS
+========================= */
 export const getMyJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({
-      createdBy: req.user.id
-    }).sort({ createdAt: -1 });
-
-    res.status(200).json(jobs);
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch admin jobs",
-      error: error.message
-    });
+    const jobs = await Job.find({ createdBy: req.user.id });
+    res.json(jobs);
+  } catch {
+    res.status(500).json({ message: "Failed to fetch admin jobs" });
   }
 };
 
-/**
- * @desc   Update job details
- * @route  PUT /api/jobs/:id
- */
+/* =========================
+   UPDATE JOB
+========================= */
 export const updateJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
-
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
-    }
+    if (!job) return res.status(404).json({ message: "Job not found" });
 
     Object.assign(job, req.body);
     await job.save();
 
-    res.status(200).json({
-      message: "Job updated",
-      job
-    });
-  } catch (error) {
+    res.json({ message: "Job updated", job });
+  } catch {
     res.status(500).json({ message: "Failed to update job" });
   }
 };
 
-/**
- * @desc   Delete job
- * @route  DELETE /api/jobs/:id
- */
+/* =========================
+   DELETE JOB (HARD DELETE)
+========================= */
 export const deleteJob = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id);
+    await Job.findByIdAndDelete(req.params.id);
 
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
-    }
+    // 🔥 IMPORTANT: remove applications so users don't see "job no longer available"
+    await Application.deleteMany({ job: req.params.id });
 
-    await job.deleteOne();
-    res.status(200).json({ message: "Job deleted successfully" });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to delete job",
-      error: error.message
-    });
+    res.json({ message: "Job deleted successfully" });
+  } catch {
+    res.status(500).json({ message: "Failed to delete job" });
   }
 };
 
-/**
- * @desc   Close a job
- * @route  PATCH /api/jobs/:id/close
- */
+/* =========================
+   CLOSE JOB
+========================= */
 export const closeJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
-
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
-    }
-
-    if (job.status === "closed") {
-      return res.status(400).json({ message: "Job already closed" });
-    }
+    if (!job) return res.status(404).json({ message: "Job not found" });
 
     job.status = "closed";
     await job.save();
 
-    res.status(200).json({
-      message: "Job closed successfully",
-      job
-    });
-  } catch (error) {
+    res.json({ message: "Job closed", job });
+  } catch {
     res.status(500).json({ message: "Failed to close job" });
   }
 };
 
-/**
- * @desc   Get jobs for logged-in user with application status
- * @route  GET /api/jobs/user
- * @access Private (User)
- */
+/* =========================
+   GET JOBS FOR USER
+========================= */
 export const getJobsForUser = async (req, res) => {
   try {
     const userId = req.user.id;
 
     const jobs = await Job.find({ status: "open" }).lean();
-
-    const applications = await Application.find({
-      applicant: userId
-    }).select("job status");
+    const applications = await Application.find({ applicant: userId });
 
     const appliedMap = {};
-    applications.forEach(app => {
-      appliedMap[app.job.toString()] = app.status;
+    applications.forEach(a => {
+      appliedMap[a.job.toString()] = a.status;
     });
 
-    const jobsWithStatus = jobs.map(job => ({
+    const result = jobs.map(job => ({
       ...job,
-      appliedStatus: appliedMap[job._id.toString()] || null
+      appliedStatus: appliedMap[job._id] || null
     }));
 
-    res.status(200).json(jobsWithStatus);
-  } catch (error) {
-    console.error("getJobsForUser error:", error);
+    res.json(result);
+  } catch {
     res.status(500).json({ message: "Failed to fetch jobs" });
   }
 };
