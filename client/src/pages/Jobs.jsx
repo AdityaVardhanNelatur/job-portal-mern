@@ -28,6 +28,8 @@ const Jobs = () => {
         message = "🎉 You are shortlisted for this job!";
       } else if (job.appliedStatus === "rejected") {
         message = "❌ Your application was rejected for this job.";
+      } else if (job.appliedStatus === "interview_scheduled") {
+        message = "📅 Your interview has been scheduled for this job.";
       }
 
       toast(message);

@@ -4,22 +4,20 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import Navbar from "./components/Navbar";
 
-/* LANDING */
+/* PUBLIC */
 import Landing from "./pages/Landing";
-
-/* AUTH */
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
 /* USER */
 import Jobs from "./pages/Jobs";
-import MyApplications from "./pages/MyApplications";
-import ApplyJob from "./pages/ApplyJob";
 import JobDetails from "./pages/JobDetails";
+import ApplyJob from "./pages/ApplyJob";
+import MyApplications from "./pages/MyApplications";
 
 /* ADMIN */
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import JobApplications from "./pages/admin/JobApplications";
+import JobApplications from "./pages/admin/JobApplications"; // ✅ CORRECT
 
 function App() {
   return (
@@ -29,7 +27,6 @@ function App() {
       <Routes>
         {/* ================= PUBLIC ================= */}
         <Route path="/" element={<Landing />} />
-
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -89,7 +86,7 @@ function App() {
           }
         />
 
-        {/* FALLBACK */}
+        {/* ================= FALLBACK ================= */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

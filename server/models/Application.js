@@ -16,16 +16,31 @@ const applicationSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+
     status: {
       type: String,
-      enum: ["pending", "shortlisted", "rejected"],
+      enum: [
+        "pending",
+        "shortlisted",
+        "interview_scheduled",
+        "rejected",
+        "hired"
+      ],
       default: "pending"
+    },
+
+    // ✅ Interview Details (ONLY when scheduled)
+    interview: {
+      date: Date,
+      time: String,
+      mode: String,      // Online / Offline
+      location: String  // Meet link or address
     }
   },
   { timestamps: true }
 );
 
-// Prevent duplicate apply
+// ✅ Prevent duplicate applications
 applicationSchema.index(
   { job: 1, applicant: 1 },
   { unique: true }

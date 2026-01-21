@@ -6,13 +6,14 @@ import upload from "../middleware/upload.js";
 import {
   applyForJob,
   updateApplicationStatus,
+  scheduleInterview,        // ✅ MUST BE IMPORTED
   getApplicationsByJob,
   getMyApplications
 } from "../controllers/applicationController.js";
 
 const router = express.Router();
 
-// USER
+/* ================= USER ================= */
 router.post(
   "/apply/:jobId",
   authMiddleware,
@@ -22,7 +23,7 @@ router.post(
 
 router.get("/my", authMiddleware, getMyApplications);
 
-// ADMIN
+/* ================= ADMIN ================= */
 router.get(
   "/job/:jobId",
   authMiddleware,
@@ -35,6 +36,14 @@ router.put(
   authMiddleware,
   adminMiddleware,
   updateApplicationStatus
+);
+
+/* 🔥 INTERVIEW ROUTE (THIS WAS MISSING) */
+router.put(
+  "/:applicationId/interview",
+  authMiddleware,
+  adminMiddleware,
+  scheduleInterview
 );
 
 export default router;

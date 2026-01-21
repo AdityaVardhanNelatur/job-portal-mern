@@ -5,7 +5,7 @@ import path from "path";
 
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-import jobRoutes from "./routes/jobRoutes.js";
+import jobRoutes from "./routes/jobRoutes.js";          // ✅ FIXED
 import applicationRoutes from "./routes/applicationRoutes.js";
 
 dotenv.config();
