@@ -117,8 +117,12 @@ const AdminJobApplications = () => {
 
             <input
               type="date"
-              className="border p-2 w-full mb-2"
-              onChange={e => setForm({ ...form, date: e.target.value })}
+              className="border p-2 w-full mb-2 rounded"
+              value={form.date}
+              min={new Date().toISOString().split("T")[0]}  // ✅ blocks past dates
+              onChange={e =>
+              setForm({ ...form, date: e.target.value })
+            }
             />
             <input
               type="time"
