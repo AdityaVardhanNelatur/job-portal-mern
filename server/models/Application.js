@@ -29,18 +29,16 @@ const applicationSchema = new mongoose.Schema(
       default: "pending"
     },
 
-    // ✅ Interview Details (ONLY when scheduled)
     interview: {
       date: Date,
       time: String,
-      mode: String,      // Online / Offline
-      location: String  // Meet link or address
+      mode: String,
+      location: String
     }
   },
   { timestamps: true }
 );
 
-// ✅ Prevent duplicate applications
 applicationSchema.index(
   { job: 1, applicant: 1 },
   { unique: true }

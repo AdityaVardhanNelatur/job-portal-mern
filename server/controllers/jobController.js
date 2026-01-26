@@ -118,20 +118,27 @@ export const getJobsForUser = async (req, res) => {
     const userId = req.user.id;
 
     const jobs = await Job.find({ status: "open" }).lean();
-    const applications = await Application.find({ applicant: userId });
 
-    const appliedMap = {};
-    applications.forEach(a => {
-      appliedMap[a.job.toString()] = a.status;
+    const applications = await Application.find({
+      applicant: userId
+    }).select("job status interview");
+
+    const appMap = {};
+    applications.forEach(app => {
+      appMap[app.job.toString()] = {
+        status: app.status,
+        interview: app.interview || null
+      };
     });
 
     const result = jobs.map(job => ({
       ...job,
-      appliedStatus: appliedMap[job._id] || null
+      appliedStatus: appMap[job._id]?.status || null,
+      interview: appMap[job._id]?.interview || null
     }));
 
     res.json(result);
-  } catch {
+  } catch (error) {
     res.status(500).json({ message: "Failed to fetch jobs" });
   }
 };
