@@ -1,101 +1,135 @@
-🚀 JobSphere – MERN Authentication & Interview Management System
-JobSphere is a production-ready MERN stack application implementing JWT-based authentication, role-based authorization (User/Admin), protected routes, and an Admin Interview Scheduling workflow.
-This project reflects how authentication, authorization, and admin workflows are handled in real-world SaaS and enterprise applications.
+🚀 JobSphere – MERN Job Portal with Role-Based Authentication & Interview Management
 
+JobSphere is a full-stack MERN job portal that implements JWT-based authentication, role-based authorization (Admin/User), and a complete hiring workflow — from job creation to interview scheduling and application tracking.
+
+This project demonstrates how real-world recruitment platforms handle authentication, authorization, resume management, and admin-driven hiring decisions.
 
 📌 Project Overview
+
 JobSphere uses a single login system for both users and admins.
-Based on the role embedded inside the JWT token, users are redirected to appropriate dashboards with strict access control.
+Access control is enforced using JWT tokens with embedded roles.
 
-Admins can:
-View job applications
+Admin Capabilities
+
+Create, update, and delete job postings
+
+View all job applications
+
+Access uploaded resumes
+
+Shortlist or reject candidates
+
 Schedule interviews
-Update application status
-Notify users about interview schedules
 
-Users can:
+User Capabilities
+
 Register & login
-Apply for jobs
+
+View available jobs
+
+Apply for jobs by uploading resumes
+
 Track application status
-View interview schedules (when assigned)
+
+View interview schedule details (if shortlisted)
 
 ✨ Key Features
 🔐 Authentication & Authorization
+
 JWT-based authentication
-Single login page for User & Admin
-Role stored securely inside JWT
-Token-based session handling
 
-🛡️ Access Control
-Protected routes (logged-in users only)
-Admin-only routes
-Unauthorized access prevention
+Single login page for Admin & User
 
-🧑‍💼 Admin Interview Scheduling
-Admin can schedule interviews
-Interview status updates (Scheduled / Pending)
-“View Details” popup for interview information
-User receives interview schedule confirmation
+Role-based access control
 
-🌐 RESTful API
-Clean controller-service architecture
-Secure middleware-based authorization
-Scalable backend structure
+Protected routes
+
+🧑‍💼 Job Management (Admin)
+
+Create new job postings
+
+Update existing jobs
+
+Delete jobs
+
+View all applicants per job
+
+📄 Resume Handling
+
+Users upload resumes during job application
+
+Admin can view/download resumes
+
+Secure file handling
+
+📝 Application Management
+
+Application status tracking:
+
+Pending
+
+Shortlisted
+
+Rejected
+
+Admin controls application status
+
+📅 Interview Scheduling
+
+Admin schedules interviews for shortlisted candidates
+
+Interview details stored in database
+
+User sees interview details in dashboard
+
+📊 User Application Tracking
+
+Users can track:
+
+Pending applications
+
+Shortlisted applications
+
+Rejected applications
+
+Interview schedules (date & message)
 
 🏗️ Tech Stack
 Frontend
+
 React (Vite)
+
 React Router DOM
+
 Axios
+
 Tailwind CSS
 
 Backend
+
 Node.js
+
 Express.js
+
 MongoDB (MongoDB Atlas)
+
 JSON Web Tokens (JWT)
 
-🔐 Authentication & Authorization Flow
-User/Admin accesses /login
-Credentials are submitted to backend
-Backend verifies credentials
-JWT token is generated with role information
-Token is stored on client (localStorage)
-Route access is controlled using middleware
-
-Role-Based Redirection
-User → User Dashboard
-Admin → Admin Dashboard
-
-🧑‍💼 Admin Interview Scheduling Flow
-Admin logs into dashboard
-Views list of job applications
-Schedules interview for a candidate
-Application status updates to Interview Scheduled
-User clicks View Details
-Popup message shows:
-Interview Scheduled – All the Best!
-
-▶️ Run the Project Locally
-
-Backend Setup
-cd backend
-npm install
-npm start
-
-Frontend Setup
-cd frontend
-npm install
-npm run dev 
-
+📁 Project Structure
 JobSphere/
 ├── backend/
 │   ├── controllers/
-│   │   └── authController.js
+│   │   ├── authController.js
+│   │   ├── jobController.js
+│   │   └── applicationController.js
 │   ├── models/
-│   │   └── User.js
+│   │   ├── User.js
+│   │   ├── Job.js
+│   │   └── Application.js
 │   ├── routes/
-│   │   └── authRoutes.js
+│   │   ├── authRoutes.js
+│   │   ├── jobRoutes.js
+│   │   └── applicationRoutes.js
 │   ├── middleware/
 │   │   ├── authMiddleware.js
 │   │   └── adminMiddleware.js
@@ -106,13 +140,87 @@ JobSphere/
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/
-│   │   │   └── Login.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Jobs.jsx
+│   │   │   ├── UserDashboard.jsx
+│   │   │   └── AdminDashboard.jsx
 │   │   ├── components/
 │   │   │   ├── ProtectedRoute.jsx
-│   │   │   └── AdminRoute.jsx
+│   │   │   ├── AdminRoute.jsx
+│   │   │   └── JobCard.jsx
 │   │   ├── utils/
 │   │   │   └── api.js
 │   │   └── App.jsx
 │   └── vite.config.js
 │
 └── README.md
+
+🔐 Authentication & Role Flow
+
+User/Admin accesses /login
+
+Credentials are verified
+
+JWT token generated with role info
+
+Token stored on client
+
+Access granted based on role
+
+Role Redirection
+
+User → Job Listings / User Dashboard
+
+Admin → Admin Dashboard
+
+🧑‍💼 Complete Hiring Workflow
+👤 User Flow
+
+User logs in
+
+Views available jobs
+
+Applies to job by uploading resume
+
+Tracks application status:
+
+Pending
+
+Shortlisted
+
+Rejected
+
+If shortlisted, views interview schedule details
+
+🛠️ Admin Flow
+
+Admin logs in
+
+Creates / updates / deletes job postings
+
+Views applicants for each job
+
+Reviews uploaded resumes
+
+Shortlists or rejects candidates
+
+Schedules interviews for shortlisted users
+
+▶️ Run the Project Locally
+Backend Setup
+cd backend
+npm install
+npm start
+
+Frontend Setup
+cd frontend
+npm install
+npm run dev
+
+🔒 Environment Variables
+
+Create .env inside backend/
+
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
